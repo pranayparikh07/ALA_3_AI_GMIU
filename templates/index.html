@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NovaChat – AI Assistant</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind Typography for better text formatting -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tailwindcss/typography@0.5.9/dist/typography.min.css">
+  <!-- Highlight.js for syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 </head>
 <body class="bg-gray-950 text-white h-screen flex font-sans">
 
@@ -33,6 +38,10 @@
               class="w-full text-left px-3 py-2 rounded-md bg-gray-800 hover:bg-gray-700 transition">
         Cybersecurity trends
       </button>
+      <button onclick="usePrompt('Write a Python factorial function')"
+              class="w-full text-left px-3 py-2 rounded-md bg-gray-800 hover:bg-gray-700 transition">
+        Python factorial code
+      </button>
     </nav>
 
     <div class="p-4 border-t border-gray-800 text-xs text-gray-500">
@@ -49,7 +58,7 @@
     </header>
 
     <!-- Chatbox -->
-    <div id="chatbox" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-950">
+    <div id="chatbox" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-950 prose prose-invert">
       <div class="text-center text-gray-500 text-sm">Start a conversation with NovaChat 🚀</div>
     </div>
 
@@ -71,6 +80,8 @@
     </div>
   </main>
 
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     const input = document.getElementById("userInput");
     const chatbox = document.getElementById("chatbox");
@@ -81,7 +92,7 @@
       "Generate 5 startup ideas",
       "Explain recursion like I’m 10",
       "Latest cybersecurity threats",
-      "Daily productivity hacks"
+      "Show Python factorial code"
     ];
     let placeholderIndex = 0;
     setInterval(() => {
@@ -109,22 +120,21 @@
       // User bubble
       chatbox.innerHTML += `
         <div class="flex justify-end">
-          <div class="bg-cyan-500 text-black px-4 py-2 rounded-lg max-w-xs shadow">
+          <div class="bg-cyan-500 text-black px-4 py-2 rounded-lg max-w-xl shadow whitespace-pre-wrap">
             ${message}
           </div>
         </div>`;
       chatbox.scrollTop = chatbox.scrollHeight;
       input.value = "";
 
-      // Fake bot typing
+      // Bot placeholder
       const botBubble = document.createElement("div");
       botBubble.className = "flex justify-start";
       const span = document.createElement("div");
-      span.className = "bg-gray-800 text-gray-200 px-4 py-2 rounded-lg max-w-xs shadow";
+      span.className = "bg-gray-800 text-gray-200 px-4 py-2 rounded-lg max-w-xl shadow prose prose-invert text-sm";
       botBubble.appendChild(span);
       chatbox.appendChild(botBubble);
 
-      // Call backend
       try {
         const response = await fetch("/chat", {
           method: "POST",
@@ -133,18 +143,15 @@
         });
         const data = await response.json();
 
-        let reply = data.reply;
-        let i = 0;
-        function typeEffect() {
-          if (i < reply.length) {
-            span.innerHTML += reply.charAt(i);
-            i++;
-            chatbox.scrollTop = chatbox.scrollHeight;
-            setTimeout(typeEffect, 15);
-          }
-        }
-        typeEffect();
+        // Render Markdown
+        span.innerHTML = marked.parse(data.reply);
 
+        // Highlight code if present
+        span.querySelectorAll("pre code").forEach((block) => {
+          hljs.highlightElement(block);
+        });
+
+        chatbox.scrollTop = chatbox.scrollHeight;
       } catch (error) {
         span.innerHTML = "⚠️ Error fetching response.";
       }
